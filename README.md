@@ -22,6 +22,29 @@
 
 ### Ответ
 
+![Скрин]( "1")
+
+```SQL
+mysql -u admin -p test_db < /backup/test_dump.sql
+
+mysql> SHOW TABLES;
++-------------------+
+| Tables_in_test_db |
++-------------------+
+| orders            |
++-------------------+
+1 row in set (0.00 sec)
+
+mysql> SELECT * FROM orders WHERE price > 300;
++----+----------------+-------+
+| id | title          | price |
++----+----------------+-------+
+|  2 | My little pony |   500 |
++----+----------------+-------+
+1 row in set (0.00 sec)
+
+
+```
 
 ## Задача 2
 
@@ -43,6 +66,23 @@
 ### Ответ
 
 
+```SQL
+CREATE USER 'test'@'localhost' IDENTIFIED WITH mysql_native_password BY 'test-pass' PASSWORD REUSE INTERVAL 180 DAY;
+ALTER USER 'test'@'localhost' WITH MAX_QUERIES_PER_HOUR 100;
+ALTER USER 'test'@'localhost' FAILED_LOGIN_ATTEMPTS 3;
+ALTER USER 'test'@'localhost' ATTRIBUTE '{"NAME": "James", "SURNAME": "Pretty"}';
+GRANT SELECT ON `test_db`.* TO 'test'@'localhost';
+
+mysql> SELECT * FROM INFORMATION_SCHEMA.USER_ATTRIBUTES WHERE User='test';
++------+-----------+----------------------------------------+
+| USER | HOST      | ATTRIBUTE                              |
++------+-----------+----------------------------------------+
+| test | localhost | {"NAME": "James", "SURNAME": "Pretty"} |
++------+-----------+----------------------------------------+
+1 row in set (0.00 sec)
+
+```
+
 ## Задача 3
 
 Установите профилирование `SET profiling = 1`.
@@ -56,6 +96,50 @@
 
 ### Ответ
 
+```SQL
+set profiling=1;
+select * from test_db.orders;
+show profiles;
+
+mysql> SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'test_db';
++--------+
+| ENGINE |
++--------+
+| InnoDB |
++--------+
+1 row in set (0.00 sec)
+
+mysql> show profiles;
++----------+------------+------------------------------+
+| Query_ID | Duration   | Query                        |
++----------+------------+------------------------------+
+|        1 | 0.00062075 | select * from test_db.orders |
++----------+------------+------------------------------+
+
+
+ALTER TABLE test_db.orders ENGINE=MyISAM;
+mysql> SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'test_db';
++--------+
+| ENGINE |
++--------+
+| MyISAM |
++--------+
+1 row in set (0.00 sec)
+
+select * from test_db.orders;
+
+mysql> show profiles;
++----------+------------+------------------------------------------+
+| Query_ID | Duration   | Query                                    |
++----------+------------+------------------------------------------+
+|        1 | 0.00062075 | select * from test_db.orders             |
+|        2 | 0.01789175 | ALTER TABLE test_db.orders ENGINE=MyISAM |
+|        3 | 0.00046125 | select * from test_db.orders             |
++----------+------------+------------------------------------------+
+3 rows in set, 1 warning (0.00 sec)
+
+
+```
 
 ## Задача 4 
 
@@ -73,5 +157,17 @@
 
 ### Ответ
 
+```SQL
+Для выполнения требуемых условий необходимо прописать в конфиг следующие параметры:
+
+innodb_file_per_table=1
+innodb_log_buffer_size=1M
+innodb_buffer_pool_size=2,4G
+innodb_log_file_size=100M
+innodb_flush_method = O_DIRECT
+tmpdir = /dev/shm
+table_cache = 4096
+table_definition_cache = 4096
+```
 
 
